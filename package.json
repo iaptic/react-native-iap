@@ -1,30 +1,22 @@
 {
-  "name": "react-native-iap",
-  "version": "12.16.4",
-  "description": "React Native In App Purchase Module.",
-  "repository": "https://github.com/hyochan/react-native-iap",
-  "author": "hyochan <hyo@hyo.dev> (https://github.com/hyochan)",
+  "name": "@iaptic/react-native-iap",
+  "version": "12.16.5",
+  "description": "Iaptic-maintained fork of react-native-iap@12.16.4 with the iOS new-architecture pod-resolution fix for React Native >= 0.83 / Expo SDK >= 55.",
+  "repository": "https://github.com/iaptic/react-native-iap",
+  "author": "Iaptic <support@iaptic.com> (https://www.iaptic.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hyochan/react-native-iap/issues"
+    "url": "https://github.com/iaptic/react-native-iap/issues"
   },
-  "homepage": "https://github.com/hyochan/react-native-iap#readme",
+  "homepage": "https://github.com/iaptic/react-native-iap#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
   "contributors": [
-    {
-      "name": "hyochan",
-      "url": "https://github.com/hyochan"
-    },
-    {
-      "name": "Andres Aguilar",
-      "url": "https://github.com/andresesfm"
-    },
-    {
-      "name": "Jérémy Barbet",
-      "url": "https://github.com/jeremybarbet"
-    }
+    { "name": "hyochan", "url": "https://github.com/hyochan" },
+    { "name": "Andres Aguilar", "url": "https://github.com/andresesfm" },
+    { "name": "Jérémy Barbet", "url": "https://github.com/jeremybarbet" },
+    { "name": "Iaptic", "url": "https://www.iaptic.com" }
   ],
   "keywords": [
     "react-native",

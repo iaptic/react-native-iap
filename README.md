@@ -1,3 +1,15 @@
+## @iaptic/react-native-iap — Iaptic-maintained fork
+
+This is an [Iaptic](https://www.iaptic.com)-maintained fork of [`react-native-iap@12.16.4`](https://github.com/hyochan/react-native-iap/tree/12.16.4) (which has been archived upstream).
+
+The fork exists to ship a single fix needed to build on **React Native ≥ 0.83 / Expo SDK ≥ 55 / new architecture**: under `RCT_NEW_ARCH_ENABLED=1`, `RNIap.podspec` now uses React Native's `install_modules_dependencies(s)` helper instead of declaring `RCT-Folly` / `RCTRequired` / `RCTTypeSafety` / `ReactCommon/turbomodule/core` directly. RN ≥ 0.83 ships those inside the prebuilt `ReactNativeDependencies` pod and no longer publishes them as standalone podspecs, which broke the upstream podspec.
+
+The JavaScript/TypeScript API and the Java / Obj-C / Swift native code are unchanged from `12.16.4`. This fork is intended for use as the IAP layer under [`react-native-iaptic`](https://github.com/iaptic/iaptic-react-native-sdk); other users may install it directly if they're stuck on the same RN 0.83 build error.
+
+If you came here looking for the actively-developed react-native-iap, head to [`hyodotdev/openiap` → `libraries/react-native-iap`](https://github.com/hyodotdev/openiap/tree/main/libraries/react-native-iap) (v15+, Nitro Modules-based). That's the long-term direction; this fork is a stop-gap on the v12.x line.
+
+---
+
 ![image](https://user-images.githubusercontent.com/27461460/75094417-20321b00-55ce-11ea-8de7-a1df42a4b7df.png)
 
 ---
