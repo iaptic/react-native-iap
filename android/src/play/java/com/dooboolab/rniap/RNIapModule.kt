@@ -1,5 +1,6 @@
 package com.dooboolab.rniap
 
+import android.app.Activity
 import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -461,7 +462,7 @@ class RNIapModule(
         isOfferPersonalized: Boolean, // New parameter in V5
         promise: Promise,
     ) {
-        val activity = currentActivity
+        val activity: Activity? = reactApplicationContext.currentActivity
         if (activity == null) {
             promise.safeReject(PromiseUtils.E_UNKNOWN, "getCurrentActivity returned null")
             return
