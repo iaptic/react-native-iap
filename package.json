@@ -1,6 +1,6 @@
 {
   "name": "@iaptic/react-native-iap",
-  "version": "12.16.5",
+  "version": "12.16.6",
   "description": "Iaptic-maintained fork of react-native-iap@12.16.4 with the iOS new-architecture pod-resolution fix for React Native >= 0.83 / Expo SDK >= 55.",
   "repository": "https://github.com/iaptic/react-native-iap",
   "author": "Iaptic <support@iaptic.com> (https://www.iaptic.com)",
