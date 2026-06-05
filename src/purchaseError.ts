@@ -16,6 +16,7 @@ export enum ErrorCode {
   E_DEFERRED_PAYMENT = 'E_DEFERRED_PAYMENT',
   E_INTERRUPTED = 'E_INTERRUPTED',
   E_IAP_NOT_AVAILABLE = 'E_IAP_NOT_AVAILABLE',
+  E_STORE_BLOCKED = 'E_STORE_BLOCKED',
 }
 
 export class PurchaseError implements Error {

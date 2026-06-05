@@ -4,7 +4,6 @@ import {
   finishTransaction as iapFinishTransaction,
   getAvailablePurchases as iapGetAvailablePurchases,
   getProducts as iapGetProducts,
-  getPurchaseHistory as iapGetPurchaseHistory,
   getSubscriptions as iapGetSubscriptions,
   requestPurchase as iapRequestPurchase,
   requestSubscription as iapRequestSubscription,
@@ -19,7 +18,6 @@ type IAP_STATUS = {
   products: Product[];
   promotedProductsIOS: Product[];
   subscriptions: Subscription[];
-  purchaseHistory: Purchase[];
   availablePurchases: Purchase[];
   currentPurchase?: Purchase;
   currentPurchaseError?: PurchaseError;
@@ -34,7 +32,6 @@ type IAP_STATUS = {
     developerPayloadAndroid?: string;
   }) => Promise<string | boolean | PurchaseResult | void>;
   getAvailablePurchases: () => Promise<void>;
-  getPurchaseHistory: () => Promise<void>;
   getProducts: ({skus}: {skus: string[]}) => Promise<void>;
   getSubscriptions: ({skus}: {skus: string[]}) => Promise<void>;
   requestPurchase: typeof iapRequestPurchase;
@@ -47,7 +44,6 @@ export const useIAP = (): IAP_STATUS => {
     products,
     promotedProductsIOS,
     subscriptions,
-    purchaseHistory,
     availablePurchases,
     currentPurchase,
     currentPurchaseError,
@@ -56,7 +52,6 @@ export const useIAP = (): IAP_STATUS => {
     setProducts,
     setSubscriptions,
     setAvailablePurchases,
-    setPurchaseHistory,
     setCurrentPurchase,
     setCurrentPurchaseError,
   } = useIAPContext();
@@ -78,10 +73,6 @@ export const useIAP = (): IAP_STATUS => {
   const getAvailablePurchases = useCallback(async (): Promise<void> => {
     setAvailablePurchases(await iapGetAvailablePurchases());
   }, [setAvailablePurchases]);
-
-  const getPurchaseHistory = useCallback(async (): Promise<void> => {
-    setPurchaseHistory(await iapGetPurchaseHistory());
-  }, [setPurchaseHistory]);
 
   const finishTransaction = useCallback(
     async ({
@@ -134,7 +125,6 @@ export const useIAP = (): IAP_STATUS => {
     products,
     promotedProductsIOS,
     subscriptions,
-    purchaseHistory,
     availablePurchases,
     currentPurchase,
     currentPurchaseError,
@@ -143,7 +133,6 @@ export const useIAP = (): IAP_STATUS => {
     getProducts,
     getSubscriptions,
     getAvailablePurchases,
-    getPurchaseHistory,
     requestPurchase: iapRequestPurchase,
     requestSubscription: iapRequestSubscription,
   };

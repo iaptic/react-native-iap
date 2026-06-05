@@ -3,6 +3,7 @@ package com.dooboolab.rniap
 import android.app.Activity
 import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingConfig
@@ -16,10 +17,8 @@ import com.android.billingclient.api.GetBillingConfigParams
 import com.android.billingclient.api.GetBillingConfigParams.Builder
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchaseHistoryRecord
-import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchaseHistoryParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.LifecycleEventListener
@@ -43,7 +42,14 @@ import com.google.android.gms.common.GoogleApiAvailability
 @ReactModule(name = RNIapModule.TAG)
 class RNIapModule(
     private val reactContext: ReactApplicationContext,
-    private val builder: BillingClient.Builder = BillingClient.newBuilder(reactContext).enablePendingPurchases(),
+    private val builder: BillingClient.Builder = BillingClient.newBuilder(reactContext)
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .enablePrepaidPlans()
+                .build()
+        )
+        .enableAutoServiceReconnection(),
     private val googleApiAvailability: GoogleApiAvailability = GoogleApiAvailability.getInstance(),
 ) : ReactContextBaseJavaModule(reactContext),
     PurchasesUpdatedListener {
@@ -155,7 +161,12 @@ class RNIapModule(
             it.startConnection(
                 object : BillingClientStateListener {
                     override fun onBillingSetupFinished(billingResult: BillingResult) {
-                        if (!isValidResult(billingResult, promise)) return
+                        if (!isValidResult(billingResult, promise)) {
+                            if (isPlayStoreBlocked(billingResult)) {
+                                promise.safeReject(PromiseUtils.E_STORE_BLOCKED, "Play Store is blocked on this device")
+                            }
+                            return
+                        }
 
                         promise.safeResolve(true)
                     }
@@ -276,8 +287,16 @@ class RNIapModule(
                     .setProductList(skuList)
                     .build()
 
-            billingClient.queryProductDetailsAsync(params) { billingResult, skuDetailsList ->
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
                 if (!isValidResult(billingResult, promise)) return@queryProductDetailsAsync
+
+                val skuDetailsList = queryResult?.productDetailsList ?: emptyList()
+
+                // Log unfetched product IDs as a warning
+                val unfetchedIds = queryResult?.unfetchedProductIds
+                if (unfetchedIds != null && unfetchedIds.isNotEmpty()) {
+                    Log.w(TAG, "Unfetched product IDs: $unfetchedIds")
+                }
 
                 val items = Arguments.createArray()
                 for (skuDetails in skuDetailsList) {
@@ -404,45 +423,6 @@ class RNIapModule(
                     if (type == BillingClient.ProductType.SUBS) {
                         item.putBoolean("autoRenewingAndroid", purchase.isAutoRenewing)
                     }
-                    items.pushMap(item)
-                }
-                promise.safeResolve(items)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun getPurchaseHistoryByType(
-        type: String,
-        promise: Promise,
-    ) {
-        ensureConnection(
-            promise,
-        ) { billingClient ->
-            billingClient.queryPurchaseHistoryAsync(
-                QueryPurchaseHistoryParams
-                    .newBuilder()
-                    .setProductType(
-                        if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
-                    ).build(),
-            ) { billingResult: BillingResult, purchaseHistoryRecordList: MutableList<PurchaseHistoryRecord>? ->
-
-                if (!isValidResult(billingResult, promise)) return@queryPurchaseHistoryAsync
-
-                Log.d(TAG, purchaseHistoryRecordList.toString())
-                val items = Arguments.createArray()
-                purchaseHistoryRecordList?.forEach { purchase ->
-                    val item = Arguments.createMap()
-                    item.putString("productId", purchase.products[0])
-                    val products = Arguments.createArray()
-                    purchase.products.forEach { products.pushString(it) }
-                    item.putArray("productIds", products)
-                    item.putDouble("transactionDate", purchase.purchaseTime.toDouble())
-                    item.putString("transactionReceipt", purchase.originalJson)
-                    item.putString("purchaseToken", purchase.purchaseToken)
-                    item.putString("dataAndroid", purchase.originalJson)
-                    item.putString("signatureAndroid", purchase.signature)
-                    item.putString("developerPayload", purchase.developerPayload.orEmpty())
                     items.pushMap(item)
                 }
                 promise.safeResolve(items)
@@ -736,6 +716,18 @@ class RNIapModule(
         reactContext
             .getJSModule(RCTDeviceEventEmitter::class.java)
             .emit(eventName, params)
+    }
+
+    /**
+     * Check if a BillingResult indicates that the Play Store is blocked
+     * on this device (OEM kids mode, parental controls, enterprise policies).
+     *
+     * In GPBL V9, this condition was reclassified from ERROR to
+     * BILLING_UNAVAILABLE with a "Play Store is blocked" debug message.
+     */
+    private fun isPlayStoreBlocked(result: BillingResult): Boolean {
+        return result.responseCode == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE
+            && result.debugMessage?.contains("Play Store is blocked") == true
     }
 
     companion object {

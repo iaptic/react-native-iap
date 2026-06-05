@@ -31,10 +31,6 @@ type GetAvailableItemsByType = <T = Purchase>(
   type: ProductType,
 ) => Promise<T[]>;
 
-type GetPurchaseHistoryByType = <T = Purchase>(
-  type: ProductType,
-) => Promise<T[]>;
-
 export type BuyItemByType = (
   type: string,
   skus: Sku[],
@@ -64,7 +60,6 @@ export interface AndroidModuleProps extends NativeModuleProps {
   flushFailedPurchasesCachedAsPending: FlushFailedPurchasesCachedAsPending;
   getItemsByType: GetItemsByType;
   getAvailableItemsByType: GetAvailableItemsByType;
-  getPurchaseHistoryByType: GetPurchaseHistoryByType;
   buyItemByType: BuyItemByType;
   acknowledgePurchase: AcknowledgePurchase;
   consumeProduct: ConsumeProduct;

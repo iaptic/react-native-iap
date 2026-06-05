@@ -22,7 +22,6 @@ type IAPContextType = {
   products: Product[];
   promotedProductsIOS: Product[];
   subscriptions: Subscription[];
-  purchaseHistory: Purchase[];
   availablePurchases: Purchase[];
   currentPurchase?: Purchase;
   currentTransaction?: TransactionSk2;
@@ -31,7 +30,6 @@ type IAPContextType = {
   setConnected: (connected: boolean) => void;
   setProducts: (products: Product[]) => void;
   setSubscriptions: (subscriptions: Subscription[]) => void;
-  setPurchaseHistory: (purchaseHistory: Purchase[]) => void;
   setAvailablePurchases: (availablePurchases: Purchase[]) => void;
   setCurrentPurchase: (currentPurchase: Purchase | undefined) => void;
   setCurrentPurchaseError: (
@@ -61,7 +59,6 @@ export function withIAPContext<T>(Component: React.ComponentType<T>) {
       [],
     );
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-    const [purchaseHistory, setPurchaseHistory] = useState<Purchase[]>([]);
 
     const [availablePurchases, setAvailablePurchases] = useState<Purchase[]>(
       [],
@@ -81,7 +78,6 @@ export function withIAPContext<T>(Component: React.ComponentType<T>) {
         products,
         subscriptions,
         promotedProductsIOS,
-        purchaseHistory,
         availablePurchases,
         currentPurchase,
         currentTransaction,
@@ -90,7 +86,6 @@ export function withIAPContext<T>(Component: React.ComponentType<T>) {
         setConnected,
         setProducts,
         setSubscriptions,
-        setPurchaseHistory,
         setAvailablePurchases,
         setCurrentPurchase,
         setCurrentPurchaseError,
@@ -100,7 +95,6 @@ export function withIAPContext<T>(Component: React.ComponentType<T>) {
         products,
         subscriptions,
         promotedProductsIOS,
-        purchaseHistory,
         availablePurchases,
         currentPurchase,
         currentTransaction,
@@ -109,7 +103,6 @@ export function withIAPContext<T>(Component: React.ComponentType<T>) {
         setConnected,
         setProducts,
         setSubscriptions,
-        setPurchaseHistory,
         setAvailablePurchases,
         setCurrentPurchase,
         setCurrentPurchaseError,
