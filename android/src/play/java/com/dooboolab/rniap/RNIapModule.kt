@@ -161,12 +161,11 @@ class RNIapModule(
             it.startConnection(
                 object : BillingClientStateListener {
                     override fun onBillingSetupFinished(billingResult: BillingResult) {
-                        if (!isValidResult(billingResult, promise)) {
-                            if (isPlayStoreBlocked(billingResult)) {
-                                promise.safeReject(PromiseUtils.E_STORE_BLOCKED, "Play Store is blocked on this device")
-                            }
+                        if (isPlayStoreBlocked(billingResult)) {
+                            promise.safeReject(PromiseUtils.E_STORE_BLOCKED, "Play Store is blocked on this device")
                             return
                         }
+                        if (!isValidResult(billingResult, promise)) return
 
                         promise.safeResolve(true)
                     }
