@@ -5,8 +5,10 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeResponseListener
 import com.android.billingclient.api.ProductDetailsResponseListener
+import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesResponseListener
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
@@ -219,46 +221,48 @@ class RNIapModuleTest {
         every { billingClient.queryProductDetailsAsync(any(), capture(listener)) } answers {
             listener.captured.onProductDetailsResponse(
                 BillingResult.newBuilder().build(),
-                listOf(
-                    mockk {
-                        every { productId } returns "sku1"
+                mockk<QueryProductDetailsResult> {
+                    every { productDetailsList } returns listOf(
+                        mockk {
+                            every { productId } returns "sku1"
 
-                        every { title } returns "title2"
-                        every { description } returns "My product"
+                            every { title } returns "title2"
+                            every { description } returns "My product"
 
-                        every { productType } returns "sub"
-                        every { name } returns "name of product"
-                        every { oneTimePurchaseOfferDetails } returns
-                            mockk {
-                                every { priceCurrencyCode } returns "my code"
-                                every { formattedPrice } returns "$20.00"
-                                every { priceAmountMicros } returns 20000
-                            }
-                        every { subscriptionOfferDetails } returns
-                            listOf(
+                            every { productType } returns "sub"
+                            every { name } returns "name of product"
+                            every { oneTimePurchaseOfferDetails } returns
                                 mockk {
-                                    every { offerToken } returns "sToken"
-                                    every { basePlanId } returns "basePlanId"
-                                    every { offerId } returns "offerId"
-                                    every { offerTags } returns listOf("offerTag1", "offerTag2")
-                                    every { pricingPhases } returns
-                                        mockk {
-                                            every { pricingPhaseList } returns
-                                                listOf(
-                                                    mockk {
-                                                        every { formattedPrice } returns "$13.0"
-                                                        every { priceCurrencyCode } returns "USD"
-                                                        every { billingPeriod } returns "1 week"
-                                                        every { billingCycleCount } returns 1
-                                                        every { priceAmountMicros } returns 13000
-                                                        every { recurrenceMode } returns 2
-                                                    },
-                                                )
-                                        }
-                                },
-                            )
-                    },
-                ),
+                                    every { priceCurrencyCode } returns "my code"
+                                    every { formattedPrice } returns "$20.00"
+                                    every { priceAmountMicros } returns 20000
+                                }
+                            every { subscriptionOfferDetails } returns
+                                listOf(
+                                    mockk {
+                                        every { offerToken } returns "sToken"
+                                        every { basePlanId } returns "basePlanId"
+                                        every { offerId } returns "offerId"
+                                        every { offerTags } returns listOf("offerTag1", "offerTag2")
+                                        every { pricingPhases } returns
+                                            mockk {
+                                                every { pricingPhaseList } returns
+                                                    listOf(
+                                                        mockk {
+                                                            every { formattedPrice } returns "$13.0"
+                                                            every { priceCurrencyCode } returns "USD"
+                                                            every { billingPeriod } returns "1 week"
+                                                            every { billingCycleCount } returns 1
+                                                            every { priceAmountMicros } returns 13000
+                                                            every { recurrenceMode } returns 2
+                                                        },
+                                                    )
+                                            }
+                                    },
+                                )
+                        },
+                    )
+                },
             )
         }
         val skus =
@@ -289,10 +293,6 @@ class RNIapModuleTest {
 
     @Test
     fun getAvailableItemsByType() {
-    }
-
-    @Test
-    fun getPurchaseHistoryByType() {
     }
 
     @Test
