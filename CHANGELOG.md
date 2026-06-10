@@ -1,5 +1,15 @@
 ## Changelog
 
+### @iaptic/react-native-iap@13.0.2 — 2026-06-11
+
+Patch release fixing GPBL V9 compile errors in 13.0.1 (`play` flavor):
+
+- **Fix**: add missing `import com.android.billingclient.api.PurchasesUpdatedListener`.
+  Without it `RNIapModule` failed to compile (`Unresolved reference 'PurchasesUpdatedListener'`,
+  `onPurchasesUpdated` overrides nothing).
+- **Fix**: replace `QueryProductDetailsResult.unfetchedProductIds` (removed in billing 9.0.0)
+  with `unfetchedProductList`, mapping each `UnfetchedProduct` via `productId`.
+
 ### @iaptic/react-native-iap@13.0.1 — 2026-06-05
 
 Patch release fixing a bug in 13.0.0:

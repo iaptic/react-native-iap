@@ -17,6 +17,7 @@ import com.android.billingclient.api.GetBillingConfigParams
 import com.android.billingclient.api.GetBillingConfigParams.Builder
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
@@ -292,9 +293,9 @@ class RNIapModule(
                 val skuDetailsList = queryResult?.productDetailsList ?: emptyList()
 
                 // Log unfetched product IDs as a warning
-                val unfetchedIds = queryResult?.unfetchedProductIds
-                if (unfetchedIds != null && unfetchedIds.isNotEmpty()) {
-                    Log.w(TAG, "Unfetched product IDs: $unfetchedIds")
+                val unfetched = queryResult?.unfetchedProductList
+                if (!unfetched.isNullOrEmpty()) {
+                    Log.w(TAG, "Unfetched product IDs: ${unfetched.map { it.productId }}")
                 }
 
                 val items = Arguments.createArray()
