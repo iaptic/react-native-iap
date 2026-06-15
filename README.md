@@ -2,11 +2,25 @@
 
 This is an [Iaptic](https://www.iaptic.com)-maintained fork of [`react-native-iap@12.16.4`](https://github.com/hyochan/react-native-iap/tree/12.16.4) (which has been archived upstream).
 
-The fork exists to ship a single fix needed to build on **React Native ≥ 0.83 / Expo SDK ≥ 55 / new architecture**: under `RCT_NEW_ARCH_ENABLED=1`, `RNIap.podspec` now uses React Native's `install_modules_dependencies(s)` helper instead of declaring `RCT-Folly` / `RCTRequired` / `RCTTypeSafety` / `ReactCommon/turbomodule/core` directly. RN ≥ 0.83 ships those inside the prebuilt `ReactNativeDependencies` pod and no longer publishes them as standalone podspecs, which broke the upstream podspec.
+The fork ships two critical fixes on top of the archived v12.x line:
 
-The JavaScript/TypeScript API and the Java / Obj-C / Swift native code are unchanged from `12.16.4`. This fork is intended for use as the IAP layer under [`react-native-iaptic`](https://github.com/iaptic/iaptic-react-native-sdk); other users may install it directly if they're stuck on the same RN 0.83 build error.
+1. **Google Play Billing Library V9** (v13.0.0+) — bumps GPBL 7→9, raises `minSdkVersion` to 23, removes `getPurchaseHistory`, and adds `E_STORE_BLOCKED` detection. See the [GPBL V9](#gpbl-v9) section below for details.
+2. **iOS new-architecture build fix** (v12.16.5+) — under `RCT_NEW_ARCH_ENABLED=1`, `RNIap.podspec` now uses React Native's `install_modules_dependencies(s)` helper, fixing `Unable to find a specification for RCT-Folly` on RN ≥ 0.83 / Expo SDK ≥ 55.
+
+This fork is intended for use as the IAP layer under [`react-native-iaptic`](https://github.com/iaptic/iaptic-react-native-sdk); other users may install it directly if they need the same fixes.
 
 If you came here looking for the actively-developed react-native-iap, head to [`hyodotdev/openiap` → `libraries/react-native-iap`](https://github.com/hyodotdev/openiap/tree/main/libraries/react-native-iap) (v15+, Nitro Modules-based). That's the long-term direction; this fork is a stop-gap on the v12.x line.
+
+## GPBL V9
+
+**This is a Google Play Billing Library V9 fork.** Version `13.0.0` upgrades from GPBL 7.0.0 to 9.0.0. Key breaking changes from the V9 migration:
+
+- **`minSdkVersion` raised to 23** (from 21) — Android 6.0 (Marshmallow) is the new minimum.
+- **`getPurchaseHistory` / `getPurchaseHistoryByType` removed** — GPBL V9 dropped `queryPurchaseHistoryAsync`; use `getAvailablePurchases` instead.
+- **`enablePendingPurchases()` API changed** — the no-arg overload is gone; you must now call `enablePendingPurchases(PendingPurchasesParams)` specifying `enableOneTimeProducts()` and/or `enablePrepaidPlans()`.
+- **`E_STORE_BLOCKED` error code added** — when the Play Store is blocked or unavailable on the device, `initConnection()` now returns `E_STORE_BLOCKED` instead of the generic `E_SERVICE_ERROR`. This lets apps detect region-restricted or policy-blocked stores.
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full changelog, including patch releases.
 
 ---
 
