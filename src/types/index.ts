@@ -7,6 +7,8 @@ import type {IosModulePropsSk2} from '../modules/iosSk2';
 
 import type * as Apple from './apple';
 
+export type {TransactionSk2} from './appleSk2';
+
 export type Sku = string;
 
 export type ProrationModesAmazon = '' | 'DEFERRED' | 'IMMEDIATE';

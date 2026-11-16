@@ -997,7 +997,7 @@ class RNIapIosSk2iOS15: Sk2Delegate {
         SKPaymentQueue.default().presentCodeRedemptionSheet()
         resolve(nil)
         #else
-        reject(IapErrors.E_USER_CANCELLED.rawValue, "This method is not available on tvOS", nil)
+        reject(IapErrors.E_IAP_NOT_AVAILABLE.rawValue, "This method is not available on tvOS", nil)
         #endif
     }
 
@@ -1059,7 +1059,7 @@ class RNIapIosSk2iOS15: Sk2Delegate {
             }
         }
         #else
-        reject(IapErrors.E_USER_CANCELLED.rawValue, "This method is not available on tvOS", nil)
+        reject(IapErrors.E_IAP_NOT_AVAILABLE.rawValue, "This method is not available on tvOS", nil)
         #endif
     }
 

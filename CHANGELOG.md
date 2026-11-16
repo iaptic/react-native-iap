@@ -22,6 +22,18 @@ Feature release — offer code redemption (iOS 27 result-based API).
 - **Note**: `RedeemOption` values are reserved for future use — the iOS 27 SDK
   exposes no public value, so `options` currently accepts and ignores any input.
 
+### Review fixes
+
+- **Fix**: `presentCodeRedemptionSheetIOS()` regressed on iOS < 15 — routing only to the
+  Sk2 module meant its Dummy delegate rejected and the deprecated API silently never
+  opened the sheet. It now falls back to the legacy StoreKit 1 sheet when the Sk2 module
+  reports `E_DEVELOPER_ERROR`, keeping the deprecated API working on iOS 10–14.
+- **Fix**: the tvOS rejects of the redemption sheet calls use `E_IAP_NOT_AVAILABLE`
+  instead of `E_USER_CANCELLED` (apps must not mistake unavailability for a user cancel).
+- `TransactionSk2` is now exported from the package root (`react-native-iap`), along with
+  the new `RedeemOption` and `PresentOfferCodeRedeemSheetOptions` types, so consumers
+  no longer need deep imports into the build output.
+
 ### @iaptic/react-native-iap@13.0.2 — 2026-06-11
 
 Patch release fixing GPBL V9 compile errors in 13.0.1 (`play` flavor):

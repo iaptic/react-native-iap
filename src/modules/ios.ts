@@ -15,6 +15,8 @@ import type {PaymentDiscount} from '../types/apple';
 import type {NativeModuleProps} from './common';
 import {presentOfferCodeRedeemSheet as presentOfferCodeRedeemSheetSk2} from './iosSk2';
 
+export type {RedeemOption, PresentOfferCodeRedeemSheetOptions} from './iosSk2';
+
 type getItems = (skus: Sku[]) => Promise<ProductIOS[] | SubscriptionIOS[]>;
 
 type getAvailableItems = (
@@ -137,7 +139,18 @@ export const presentOfferCodeRedeemSheet = presentOfferCodeRedeemSheetSk2;
  * @returns {Promise<null>}
  */
 export const presentCodeRedemptionSheetIOS = async (): Promise<null> => {
-  await presentOfferCodeRedeemSheetSk2().catch(() => undefined);
+  try {
+    await presentOfferCodeRedeemSheetSk2();
+  } catch (e: any) {
+    // iOS < 15: the Sk2 delegate is a Dummy that rejects with E_DEVELOPER_ERROR;
+    // fall back to the legacy StoreKit 1 sheet so the deprecated API keeps working.
+    if (
+      e?.code === 'E_DEVELOPER_ERROR' &&
+      RNIapIos?.presentCodeRedemptionSheet
+    ) {
+      await RNIapIos.presentCodeRedemptionSheet().catch(() => undefined);
+    }
+  }
   return null;
 };
 
