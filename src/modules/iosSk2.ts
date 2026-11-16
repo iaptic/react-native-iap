@@ -39,6 +39,19 @@ type presentCodeRedemptionSheet = () => Promise<null>;
 type showManageSubscriptions = () => Promise<null>;
 type getStorefront = () => Promise<string>;
 
+/**
+ * An option that customizes the behavior of an offer code redemption.
+ *
+ * The iOS 27 SDK does not expose any public `RedeemOption` value yet, so this type
+ * is reserved for future values — values passed today are ignored by the native layer.
+ */
+export type RedeemOption = string;
+
+/**
+ * Options for {@link presentOfferCodeRedeemSheet}.
+ */
+export type PresentOfferCodeRedeemSheetOptions = RedeemOption[];
+
 export interface IosModulePropsSk2 extends NativeModuleProps {
   isAvailable(): number;
   latestTransaction(sku: string): Promise<TransactionSk2>;
@@ -56,6 +69,9 @@ export interface IosModulePropsSk2 extends NativeModuleProps {
   finishTransaction: finishTransaction;
   getPendingTransactions: getPendingTransactions;
   presentCodeRedemptionSheet: presentCodeRedemptionSheet;
+  presentOfferCodeRedeemSheet: (
+    options: PresentOfferCodeRedeemSheetOptions,
+  ) => Promise<TransactionSk2>;
   showManageSubscriptions: showManageSubscriptions;
   disable: () => Promise<null>;
   beginRefundRequest: (sku: string) => Promise<RefundRequestStatus>;
@@ -98,6 +114,28 @@ export const latestTransaction = (sku: string): Promise<TransactionSk2> =>
  */
 export const beginRefundRequest = (sku: string): Promise<RefundRequestStatus> =>
   RNIapIosSk2.beginRefundRequest(sku);
+
+/**
+ * Present the App Store offer code redemption sheet (iOS only).
+ *
+ * On iOS 27 and later this uses the result-based StoreKit API: the promise resolves with
+ * the redeemed transaction (also emitted through `purchaseUpdatedListener`, exactly like
+ * a purchase) and rejects on cancel or error, using the existing error codes
+ * (`E_USER_CANCELLED`, `E_NETWORK_ERROR`, `E_IAP_NOT_AVAILABLE`, `E_UNKNOWN`).
+ *
+ * Below iOS 27 the call is fire-and-forget (deprecated sheet APIs): the promise resolves
+ * once the sheet has been presented and never reports cancel or errors — a documented
+ * limitation. A successful redemption still arrives through `purchaseUpdatedListener`.
+ *
+ * Only available with the StoreKit 2 native module (iOS 15+).
+ *
+ * @param options RedeemOption values, reserved for future use (default: none).
+ * @returns The redeemed transaction on iOS 27+, `null` below.
+ */
+export const presentOfferCodeRedeemSheet = (
+  options: PresentOfferCodeRedeemSheetOptions = [],
+): Promise<TransactionSk2 | null> =>
+  RNIapIosSk2.presentOfferCodeRedeemSheet(options);
 
 /**
  *
