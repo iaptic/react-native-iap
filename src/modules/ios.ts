@@ -13,6 +13,9 @@ import type {
 import type {PaymentDiscount} from '../types/apple';
 
 import type {NativeModuleProps} from './common';
+import {presentOfferCodeRedeemSheet as presentOfferCodeRedeemSheetSk2} from './iosSk2';
+
+export type {RedeemOption, PresentOfferCodeRedeemSheetOptions} from './iosSk2';
 
 type getItems = (skus: Sku[]) => Promise<ProductIOS[] | SubscriptionIOS[]>;
 
@@ -109,11 +112,47 @@ export const getReceiptIOS = async ({
   }
 };
 /**
+ * Present the App Store offer code redemption sheet (iOS only).
+ *
+ * On iOS 27 and later this uses the result-based StoreKit API: the promise resolves with
+ * the redeemed transaction (also emitted through `purchaseUpdatedListener`, exactly like
+ * a purchase) and rejects on cancel or error, using the existing error codes
+ * (`E_USER_CANCELLED`, `E_NETWORK_ERROR`, `E_IAP_NOT_AVAILABLE`, `E_UNKNOWN`).
+ *
+ * Below iOS 27 the call is fire-and-forget (deprecated sheet APIs): the promise resolves
+ * once the sheet has been presented and never reports cancel or errors — a documented
+ * limitation. A successful redemption still arrives through `purchaseUpdatedListener`.
+ *
+ * @param options RedeemOption values, reserved for future use (default: none).
+ * @returns The redeemed transaction on iOS 27+, `null` below.
+ */
+export const presentOfferCodeRedeemSheet = presentOfferCodeRedeemSheetSk2;
+
+/**
  * Launches a modal to register the redeem offer code in IOS.
+ *
+ * @deprecated Use {@link presentOfferCodeRedeemSheet} instead, which returns the redeemed
+ * transaction on iOS 27+ and reports cancel and errors. This wrapper ignores the result
+ * (including cancel and error rejections, so the promise never rejects) to keep the
+ * historical fire-and-forget contract.
+ *
  * @returns {Promise<null>}
  */
-export const presentCodeRedemptionSheetIOS = async (): Promise<null> =>
-  getIosModule().presentCodeRedemptionSheet();
+export const presentCodeRedemptionSheetIOS = async (): Promise<null> => {
+  try {
+    await presentOfferCodeRedeemSheetSk2();
+  } catch (e: any) {
+    // iOS < 15: the Sk2 delegate is a Dummy that rejects with E_DEVELOPER_ERROR;
+    // fall back to the legacy StoreKit 1 sheet so the deprecated API keeps working.
+    if (
+      e?.code === 'E_DEVELOPER_ERROR' &&
+      RNIapIos?.presentCodeRedemptionSheet
+    ) {
+      await RNIapIos.presentCodeRedemptionSheet().catch(() => undefined);
+    }
+  }
+  return null;
+};
 
 /**
  * Should Add Store Payment (iOS only)

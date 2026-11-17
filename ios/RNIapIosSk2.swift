@@ -86,6 +86,12 @@ protocol Sk2Delegate {
         reject: @escaping RCTPromiseRejectBlock
     )
 
+    func  presentOfferCodeRedeemSheet(
+        _ options: [String],
+        resolve: @escaping RCTPromiseResolveBlock,
+        reject: @escaping RCTPromiseRejectBlock
+    )
+
     func  showManageSubscriptions(
         _ resolve: @escaping RCTPromiseResolveBlock,
         reject: @escaping RCTPromiseRejectBlock
@@ -221,6 +227,14 @@ class DummySk2: Sk2Delegate {
 
     func  presentCodeRedemptionSheet(
         _ resolve: @escaping RCTPromiseResolveBlock,
+        reject: @escaping RCTPromiseRejectBlock
+    ) {
+        reject(errorCode, errorMessage, nil)
+    }
+
+    func  presentOfferCodeRedeemSheet(
+        _ options: [String],
+        resolve: @escaping RCTPromiseResolveBlock,
         reject: @escaping RCTPromiseRejectBlock
     ) {
         reject(errorCode, errorMessage, nil)
@@ -406,6 +420,14 @@ class RNIapIosSk2: RCTEventEmitter, Sk2Delegate {
         reject: @escaping RCTPromiseRejectBlock = { _, _, _ in }
     ) {
         delegate.presentCodeRedemptionSheet(resolve, reject: reject)
+    }
+
+    @objc public func presentOfferCodeRedeemSheet(
+        _ options: [String],
+        resolve: @escaping RCTPromiseResolveBlock = { _ in },
+        reject: @escaping RCTPromiseRejectBlock = { _, _, _ in }
+    ) {
+        delegate.presentOfferCodeRedeemSheet(options, resolve: resolve, reject: reject)
     }
 
     @objc public func showManageSubscriptions(
@@ -975,8 +997,111 @@ class RNIapIosSk2iOS15: Sk2Delegate {
         SKPaymentQueue.default().presentCodeRedemptionSheet()
         resolve(nil)
         #else
-        reject(IapErrors.E_USER_CANCELLED.rawValue, "This method is not available on tvOS", nil)
+        reject(IapErrors.E_IAP_NOT_AVAILABLE.rawValue, "This method is not available on tvOS", nil)
         #endif
+    }
+
+    /**
+     Present the App Store offer-code redemption sheet.
+
+     iOS 27+ uses the result-based `presentOfferCodeRedeemSheet(from:options:)` overload:
+     on success the redeemed transaction is returned and emitted on `purchase-updated`, exactly
+     like `buyProduct`. Cancel and error outcomes are only reported on iOS 27+.
+     Below iOS 27 the call is fire-and-forget (FOV-511b): the promise resolves once the sheet has
+     been presented and never reports cancel or errors.
+
+     `options` is reserved for future `RedeemOption` values — the iOS 27 SDK exposes no public
+     RedeemOption value yet, so an empty set is always passed to StoreKit.
+     */
+    public func  presentOfferCodeRedeemSheet(
+        _ options: [String],
+        resolve: @escaping RCTPromiseResolveBlock = { _ in },
+        reject: @escaping RCTPromiseRejectBlock = { _, _, _ in }
+    ) {
+        #if !os(tvOS)
+        Task {
+            if #available(iOS 27.0, *) {
+                guard let viewController = await currentWindow()?.rootViewController else {
+                    reject(IapErrors.E_DEVELOPER_ERROR.rawValue, "Could not find the root view controller", nil)
+                    return
+                }
+                if !options.isEmpty {
+                    debugMessage("presentOfferCodeRedeemSheet: no public RedeemOption values exist in the iOS 27 SDK, ignoring options \(options)")
+                }
+                do {
+                    let result = try await AppStore.presentOfferCodeRedeemSheet(from: viewController)
+                    switch result {
+                    case .verified(let transaction):
+                        debugMessage("Offer code redeemed")
+                        self.addTransaction(transaction)
+                        self.sendEvent?("purchase-updated", serialize(transaction, result))
+                        resolve(serialize(transaction, result))
+                    case .unverified(_, let verificationError):
+                        debugMessage("Offer code redemption failed verification")
+                        reject(
+                            IapErrors.E_UNKNOWN.rawValue,
+                            "Offer code redemption failed: unverified (\(verificationError.localizedDescription))",
+                            verificationError)
+                    }
+                } catch {
+                    debugMessage("Offer code redemption failed")
+                    rejectRedeemError(error, reject: reject)
+                }
+            } else if #available(iOS 16.0, *) {
+                // Deprecated fire-and-forget path (pre-iOS 27): no cancel or error reporting.
+                if let scene = await currentWindow()?.windowScene {
+                    try? await AppStore.presentOfferCodeRedeemSheet(in: scene)
+                }
+                resolve(nil)
+            } else {
+                SKPaymentQueue.default().presentCodeRedemptionSheet()
+                resolve(nil)
+            }
+        }
+        #else
+        reject(IapErrors.E_IAP_NOT_AVAILABLE.rawValue, "This method is not available on tvOS", nil)
+        #endif
+    }
+
+    /**
+     Map a failed offer-code redemption to existing error codes so purchase error handlers
+     keep working unchanged. The message carries the Apple case name.
+     */
+    func rejectRedeemError(_ error: Error, reject: @escaping RCTPromiseRejectBlock) {
+        guard let storeKitError = error as? StoreKitError else {
+            reject(
+                IapErrors.E_UNKNOWN.rawValue,
+                "Offer code redemption failed: unknown (\(error.localizedDescription))",
+                error)
+            return
+        }
+        switch storeKitError {
+        case .userCancelled:
+            reject(
+                IapErrors.E_USER_CANCELLED.rawValue,
+                "Offer code redemption failed: userCancelled",
+                error)
+        case .networkError:
+            reject(
+                IapErrors.E_NETWORK_ERROR.rawValue,
+                "Offer code redemption failed: networkError (\(error.localizedDescription))",
+                error)
+        case .notEntitled, .notAvailableInStorefront, .unsupported, .invalidPresentationContext:
+            reject(
+                IapErrors.E_IAP_NOT_AVAILABLE.rawValue,
+                "Offer code redemption failed: \(String(describing: storeKitError)) (\(error.localizedDescription))",
+                error)
+        case .systemError, .unknown:
+            reject(
+                IapErrors.E_UNKNOWN.rawValue,
+                "Offer code redemption failed: \(String(describing: storeKitError)) (\(error.localizedDescription))",
+                error)
+        @unknown default:
+            reject(
+                IapErrors.E_UNKNOWN.rawValue,
+                "Offer code redemption failed: \(String(describing: storeKitError)) (\(error.localizedDescription))",
+                error)
+        }
     }
 
     public func showManageSubscriptions(
